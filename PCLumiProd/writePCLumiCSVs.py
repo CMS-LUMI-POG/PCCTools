@@ -403,9 +403,20 @@ if args.corrtfile!="":
     for histKey in histKeys:
         histName=histKey.GetName()
         # example hist name:  Ratio_Correction_275376_LS3101_LS3200
-        if histName.find("Ratio_Correction_")!=-1: 
+        if histName.find("Ratio_Correction_")!=-1:
+            beforeName=histName.replace("Ratio_Correction","Before_Corr")
+            h_before=corrtfile.Get(beforeName)
+              
             nameParts=histName.split("_") 
             run=int(nameParts[2])
+            thisFill=int(findRunInFill(run))
+            if thisFill not in NBXPerFill.keys():
+                print thisFill,"not in fills"
+                continue
+            nbx=NBXPerFill[thisFill]
+            entries=h_before.GetEntries()
+            if float(entries)/float(nbx)<7:
+                continue
             if run in vetoCorrRuns:
                 continue
             lsstart=int(nameParts[-2].split("LS")[1])
@@ -603,6 +614,7 @@ for filename in filenames:
                         else:
                             rawPCCFilePerBX.write(","+str(tree.nPCPerBXid[index]))
                 rawPCCFilePerBX.write("\n")
+            print "correction factor:", corrFactor
             PCLumi_corr=PCLumi_corr*corrFactor
             PCLumiFile.write(str(tree.run)+","+str(tree.LS)+","+str(PCLumi_corr)+"\n")
             if args.xing==1:
