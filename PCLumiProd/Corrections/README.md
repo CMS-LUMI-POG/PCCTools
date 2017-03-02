@@ -18,9 +18,17 @@ Checked the missing runs, all the missing runs are the ones shorter than 30 LSs,
 is imcomplete, have resubmitted the crab job.
 ##############################################################################################################################
 
-Feb. 28, 2018:
+Feb. 28, 2017:
 Update the corection file for FPix only data:
 
 /store/group/comm_luminosity/PCC/ForLumiSystematics/CorrectionFiles/Overall_Correction_PCC_Run2016_per100LSs_FPix_only_v1.root
+
+##############################################################################################################################
+
+Mar. 2, 2017:
+Update the correction file for FP+BP data, get rid of the overlap, fix the correction for 5257:
+
+/store/group/comm_luminosity/PCC/ForLumiSystematics/CorrectionFiles/Overall_Correction_Run2016_PCC_FPBP_Mar2_v4.root
+
 
 ##############################################################################################################################
