@@ -5,10 +5,11 @@ parser = argparse.ArgumentParser(description='Find a ROOT file among many with t
 parser.add_argument('-r', '--runs', type=str, default="", help="Comma-separated list of runs to find vetoed modules in (e.g. 262204,262205,262235)")
 parser.add_argument('--modStrToNum',  default="modList.txt", help="Text file containing lines like \'302055700 BPix_BpI_SEC4_LYR1_LDR5F_MOD1\'")
 parser.add_argument('-o', '--output', default="vetoModules.txt", help="Name of output file.")
-parser.add_argument('--pathFlag', default="pixel", help="pixel for established list; pixelscratch/pixelscratch for new lists")
+#parser.add_argument('--pathFlag', default="pixel", help="pixel for established list; pixelscratch/pixelscratch for new lists")
+parser.add_argument('-j', '--json', default="", help="Input a CMS json file to generate a list of runs to check")
 args = parser.parse_args()
 
-if args.runs=="":
+if args.runs=="" and args.json=="":
     print "No runs to search.  Exiting."
     sys.exit(1)
 
@@ -16,7 +17,16 @@ if args.runs=="":
 ##For example for fill 4634 run 262081. 
 ##You can take them from WBM for the fill you are interested in.
 ##https://cmswbm.web.cern.ch/cmswbm/cmsdb/servlet/FillReport
-runs=args.runs.split(",")
+if args.runs!="":
+    runs=args.runs.split(",")
+elif args.json!=0:
+    import json
+    jsonfile=open(args.json)
+    jsondict=json.load(jsonfile)
+    runs=jsondict.keys()
+    runs.sort()
+    for iRuns in range(len(runs)):
+        runs[iRuns]=str(runs[iRuns])
 
 globalConfigKeys=[]
 
@@ -46,12 +56,20 @@ for modLine in modLines:
 for run in runs:
     runDir=int(run)/1000
     runDir=runDir*1000
-    pixelConfigFileName="/"+args.pathFlag+"/data0/Run_"+str(runDir)+"/Run_"+str(run)+"/PixelConfigurationKey.txt"
+    #pixelConfigFileName="/"+args.pathFlag+"/data0/Run_"+str(runDir)+"/Run_"+str(run)+"/PixelConfigurationKey.txt"
+    pixelConfigFileName="/pixel/data0/Run_"+str(runDir)+"/Run_"+str(run)+"/PixelConfigurationKey.txt"
     if os.path.isfile(pixelConfigFileName):
         pixelConfigFile=open(pixelConfigFileName)
     else:
-        print "No ",pixelConfigFileName
-        continue
+        print "No ",pixelConfigFileName,
+        print "Try pixelscratch/pixelscratch"
+        pixelConfigFileName="/pixelscratch/pixelscratch/data0/Run_"+str(runDir)+"/Run_"+str(run)+"/PixelConfigurationKey.txt"
+        if os.path.isfile(pixelConfigFileName):
+            pixelConfigFile=open(pixelConfigFileName)
+            print "OK!"
+        else:
+            print "No ",pixelConfigFileName
+            continue
 
     lines=pixelConfigFile.readlines()
     for line in lines:
@@ -92,16 +110,25 @@ detConfigs=[]
 
 iLine=0
 for iLine in range(len(pixelCfgMapLines)):
+    print iLine,pixelCfgMapLines[iLine]
     mapLine=pixelCfgMapLines[iLine]
     if mapLine.find("key ")!=-1:
         key=mapLine.split()[1]
         if key in globalConfigKeys:
-            #print pixelCfgMapLines[iLine+1]
-            if pixelCfgMapLines[iLine+1].find("detconfig")!=-1:
-                thisdetconfig=pixelCfgMapLines[iLine+1].split()[1]
-                #print thisdetconfig
-                if thisdetconfig not in detConfigs:
-                    detConfigs.append(thisdetconfig)
+            iLoop=1
+            while iLoop<40:
+                if pixelCfgMapLines[iLine+iLoop].find("detconfig")!=-1:
+                    thisdetconfig=pixelCfgMapLines[iLine+iLoop].split()[1]
+                    #print thisdetconfig
+                    if thisdetconfig not in detConfigs:
+                        detConfigs.append(thisdetconfig)
+                    break
+                #if you find the next one, stop
+                if pixelCfgMapLines[iLine+iLoop].find("key")!=-1:
+                    print "Didn't find detconfig"
+                    break
+                iLoop=iLoop+1
+                
 
 print "detector configurations",detConfigs
 
@@ -126,14 +153,16 @@ for detConfig in detConfigs:
                 badModules.append(module)
 
 badModules.sort()
-print "bad modules",badModules
+print "(n) bad modules (",len(badModules),") ",badModules
 
 ##write out the module numbers to a file
 outputFile=open(args.output,"w")
 print "Writing bad module numbers to",args.output
 for badModule in badModules:
-    outputFile.write(str(moduleStrToNum[badModule])+"\n")
-
+    if moduleStrToNum.has_key(badModule):
+        outputFile.write(str(moduleStrToNum[badModule])+"\n")
+    else:
+        print "modulesStrToNum has no key for",badModule
 outputFile.close()
                 
 
