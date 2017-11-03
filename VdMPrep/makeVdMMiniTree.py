@@ -131,6 +131,7 @@ tree.SetBranchStatus("timeStamp_begin",1)
 ###
 #Vtx Stuff
 ###
+tree.SetBranchStatus("nPU",1)
 tree.SetBranchStatus("nVtx",1)
 tree.SetBranchStatus("vtx_isGood",1)
 tree.SetBranchStatus("vtx_isFake",1)
@@ -178,6 +179,7 @@ BXid            = array.array( 'l', [ 0 ] )
 nCluster        = array.array( 'd', [ 0 ] )
 nClusterPerLayer= array.array( 'd', 5*[ 0 ] )
 
+nPU             = array.array('d',[0])
 nVtx            = array.array('d',[0])
 vtx_isGood      = array.array('d',[0])
 vtx_isFake      = array.array('d',[0])
@@ -192,6 +194,7 @@ newtree.Branch("BXid",BXid,"BXid/I")
 newtree.Branch("nCluster",nCluster,"nCluster/D")
 newtree.Branch("nClusterPerLayer",nClusterPerLayer,"nClusterPerLayer[5]/D")
 newtree.Branch("nVtx",nVtx,"nVtx/D")
+newtree.Branch("nPU",nPU,"nPU/D")
 
 
 #######################
@@ -200,10 +203,14 @@ newtree.Branch("nVtx",nVtx,"nVtx/D")
 nentries=tree.GetEntries()
 
 print nentries
-maxNBX=0
+nEventLimit=200
+PUpresent=True
+
 for iev in range(nentries):
     tree.GetEntry(iev)
-    if iev%30000==0:
+    if nEventLimit!=-1 and iev>nEventLimit:
+        break
+    if iev%100==0:
         print "iev,",iev
         print "(tree.run,tree.LS)",tree.LS
         print "len(tree.nPixelClusters)",len(tree.nPixelClusters)
@@ -214,21 +221,24 @@ for iev in range(nentries):
 
     pixelCount=[0]*6
 
+    if PUpresent:
+        try:
+            nPU[0]=tree.nPU
+        except:
+            print "nPU is missing.  Won't check anymore."
+            nPU[0]=0
+            PUpresent=False
+
     for item in tree.nPixelClusters:
         bxid=item[0][0]
         module=item[0][1]
-        layer=tree.layers[module]
+        #layer=tree.layers[module]
         clusters=item[1]
 
-        if layer in vetoModules:
+        if module in vetoModules:
             continue
 
-        if layer==6:
-            layer=1
-
-        pixelCount[layer]=pixelCount[layer]+clusters
-        if layer!=1:
-            pixelCount[0]=pixelCount[0]+clusters
+        pixelCount[0]=pixelCount[0]+clusters
 
     nVtx[0]=0
     for i in range(0,tree.nVtx):
