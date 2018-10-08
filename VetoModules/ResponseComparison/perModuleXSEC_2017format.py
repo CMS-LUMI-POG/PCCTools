@@ -5,9 +5,9 @@ import subprocess
 import argparse
 
 parser = argparse.ArgumentParser(description='Compute xsec per module from pcc ntuples and given xsec')
-parser.add_argument('-d','--dir',  type=str, default="", help='Director of pcc ntuples to input')
-parser.add_argument('-f','--file', type=str, default="", help='The pcc ntuple to input')
-parser.add_argument('-fl','--flist',type=argparse.FileType('r'), help='File List of PCC ntuples')
+parser.add_argument('-d','--dir',  type=str, default="", help='Directory of AlCaPCC to input')
+parser.add_argument('-f','--file', type=str, default="", help='The AlCaPCC file to input')
+parser.add_argument('-fl','--flist',type=argparse.FileType('r'), help='File list of AlCaPCC to input')
 parser.add_argument('--xsec', type=float, default=9e6, help='Total pcc xsec')
 parser.add_argument('-l','--label',type=str, default="test", help='Label for output file')
 parser.add_argument('-r','--run',default=0, help='Run to select')

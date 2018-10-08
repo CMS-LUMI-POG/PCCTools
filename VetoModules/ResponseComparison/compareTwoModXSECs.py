@@ -71,7 +71,7 @@ highp=0
 highm=0
 
 modList={}
-modFile=open("modList.txt")
+modFile=open("../modList.txt")
 #modFile=open("2018MasterModlist.txt")
 for line in modFile.readlines():
     items=line.split()

@@ -5,7 +5,7 @@ import subprocess
 import argparse
 
 parser = argparse.ArgumentParser(description='Compute xsec per module from raw pcc in pickle files and given xsec')
-parser.add_argument('-d','--dir',  type=str, default="", help='Director of pcc ntuples to input')
+parser.add_argument('-d','--dir',  type=str, default="", help='Directory of pickle to input')
 parser.add_argument('--xsec', type=float, default=1, help='Total pcc xsec')
 parser.add_argument('-l','--label',type=str, default="test", help='Label for output file')
 parser.add_argument('--veto',default="", help='Vetolist')
