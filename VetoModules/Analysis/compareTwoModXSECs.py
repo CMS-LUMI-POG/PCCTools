@@ -109,6 +109,8 @@ n2Veto=[]
 
 outfile=open(args.outdir+"lostlist_"+args.labels.split(",")[1]+".txt","wb")
 vetofile=open(args.outdir+"veto_"+args.labels.split(",")[1]+".txt","wb")
+VdMLocResFileL=open("VdMLocResFileLow","w")
+VdMLocResFileH=open("VdMLocResFileHigh","w")
 
 for mod in commonMods:
     if mod in vetoList:
@@ -119,8 +121,28 @@ for mod in commonMods:
     #    print mod,dict1[mod],dict2[mod],dict1[mod]/dict2[mod]
     else:
         ratio.Fill(dict1[mod]/dict2[mod])
+        if dict1[mod]/dict2[mod] >1.0:
+           VdMLocResFileH.write(str(mod)) 
+           VdMLocResFileH.write("\n") 
+        if dict1[mod]/dict2[mod] <1.0:
+           VdMLocResFileL.write(str(mod)) 
+           VdMLocResFileL.write("\n") 
+           
 ###Change this to set the veto list window, not the display window
-        if (dict1[mod]/dict2[mod] > 1.0 or dict1[mod]/dict2[mod] < 0.98):
+        #if (dict1[mod]/dict2[mod] > 1.7 or dict1[mod]/dict2[mod] < 1.45):#AV
+        #if (dict1[mod]/dict2[mod] > 1.05 or dict1[mod]/dict2[mod] < 0.95):#AV2
+        #if (dict1[mod]/dict2[mod] > 1.65 or dict1[mod]/dict2[mod] < 1.35):#BV
+        #if (dict1[mod]/dict2[mod] > 1.05 or dict1[mod]/dict2[mod] < 0.95):#BV2
+        #if (dict1[mod]/dict2[mod] > 1.65 or dict1[mod]/dict2[mod] < 1.37):#CV
+        #if (dict1[mod]/dict2[mod] > 1.05 or dict1[mod]/dict2[mod] < 0.95):#CV2
+        #if (dict1[mod]/dict2[mod] > 1.65 or dict1[mod]/dict2[mod] < 1.4):#DV
+        #if (dict1[mod]/dict2[mod] > 1.05 or dict1[mod]/dict2[mod] < 0.95):#DV2
+        #if (dict1[mod]/dict2[mod] > 1.05 or dict1[mod]/dict2[mod] < 1.03):#BA
+        #if (dict1[mod]/dict2[mod] > 1.0525 or dict1[mod]/dict2[mod] < 1.015):#CA
+        #if (dict1[mod]/dict2[mod] > 1.045 or dict1[mod]/dict2[mod] < 1.005):#DA
+        #if (dict1[mod]/dict2[mod] > 1.005 or dict1[mod]/dict2[mod] < 0.985):#CB
+        if (dict1[mod]/dict2[mod] > 1.005 or dict1[mod]/dict2[mod] < 0.965):#DB
+        #if (dict1[mod]/dict2[mod] > 1.01 or dict1[mod]/dict2[mod] < 0.99):#DC
             n2Veto.append(mod)
         iCount=iCount+1
         xsec1=xsec1+dict1[mod]
@@ -159,6 +181,8 @@ for mod in commonMods:
         if mod not in newVeto:
             newVeto.append(mod)
 
+VdMLocResFileL.close()
+VdMLocResFileH.close()
 print "New Veto based on cut, "
 for mod in n2Veto:
         print mod
@@ -211,6 +235,7 @@ for mod in commonMods:
     else:
         rel1.Fill(dict1[mod]/xsec1)
         rel2.Fill(dict2[mod]/xsec2)
+
     #if mod not in newVeto:
     #    ratioFilter.Fill(dict1[mod]/dict2[mod])
 
