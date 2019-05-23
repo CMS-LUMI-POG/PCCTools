@@ -4,7 +4,6 @@ import numpy
 import math
 
 filename=sys.argv[1]
-#label=filename.split(".")[0]
 label=sys.argv[2]
 if not os.path.exists(label):
     os.mkdir(label)
@@ -41,12 +40,7 @@ minPU=15
 maxPU=50
 steps=5
 
-#minPU=30
-#maxPU=32
-#steps=1
-
 maxBin=210
-#int(maxPU+math.sqrt(maxPU)*2)
 
 can=ROOT.TCanvas("can","",1000,700)
 
@@ -102,8 +96,6 @@ for mean in means:
     last1PercentBin=0
     for ibin in range(0,newtarget[mean].GetNbinsX()+1):
         newtarget[mean].SetBinContent(ibin+1,ROOT.TMath.PoissonI(ibin,mean))
-        #if ibin<30:
-        #    print ibin,newtarget.GetBinContent(ibin+1)
         if ROOT.TMath.PoissonI(ibin,mean) > 0.05:
             last5PercentBin=ibin
         if ROOT.TMath.PoissonI(ibin,mean) > 0.02:
@@ -121,12 +113,10 @@ for mean in means:
     simText.Draw("same")
     can.Update()
     can.SaveAs(label+"/targetPU_mean"+str(mean)+".png")
-    #raw_input()       
 
     reweighting[mean]=newtarget[mean].Clone("ratio")
     reweighting[mean].Divide(pileup)
     reweighting[mean].SetTitle("reweighting")
-    #print "Integral,bin0,1,2,3,",reweighting[mean].Integral(),reweighting[mean].GetBinContent(0),reweighting[mean].GetBinContent(1),reweighting[mean].GetBinContent(2),reweighting[mean].GetBinContent(3)
     reweighting[mean].Draw()
     simText.Draw("same")
     can.Update()
@@ -146,15 +136,11 @@ for iev in range(nentries):
     for mean in means:
         for observable in observables.keys():
             observables[observable][5][mean].Fill(GetObs(observable),reweighting[mean].GetBinContent(int(tree.nPU)+1))
-            # am I getting the right value?
 
         checkpileup[mean].Fill(tree.nPU,reweighting[mean].GetBinContent(int(tree.nPU)+1))
     
 
 for mean in means:
-    #print iGraph, imean, PCCs[mean].GetMean(),checkpileup[mean].GetMeanError(), PCCs[mean].GetMeanError()
-
-
     checkpileup[mean].Scale(1./checkpileup[mean].Integral())
 
     #need observables loop
@@ -184,7 +170,6 @@ for mean in means:
     simText.Draw("same")
     can.Update()
     can.SaveAs(label+"/reweightingCheck_PU"+str(mean)+".png")
-    #raw_input()
     
     iGraph=iGraph+1
     
@@ -209,6 +194,7 @@ for observable in observables.keys():
 
     leg=ROOT.TLegend(0.45,0.45,0.87,0.15) 
     leg.AddEntry(line,observable+"/nPU = "+"{:.2f} #pm {:.2f}".format(fitRes.Parameter(1),fitRes.ParError(1)),"l")
+    #uncomment if the noise term would go into the legend too
     #leg.AddEntry(line,"noise "+"{:.4f} #pm {:.4f}".format(fitRes.Parameter(0),fitRes.ParError(0)),"l")
     leg.AddEntry(line,"#chi^{2}/NDF = "+"{:.1f} / {:.1f}".format(fitRes.Chi2(),fitRes.Ndf()),"l")
     leg.Draw("same")
@@ -218,13 +204,11 @@ for observable in observables.keys():
     can.SaveAs(label+"/"+observable+str(iPlot)+"vsPU.pdf")
     can.SaveAs(label+"/"+observable+str(iPlot)+"vsPU.root")
     can.SaveAs(label+"/"+observable+str(iPlot)+"vsPU.C")
-    #raw_input()
 
     iPlot=iPlot+1
     residual=MakeResidualPlot(observables[observable][3],line)
     residual.SetTitle(";nPU;#Delta"+observable+"_{MC-Fit}")
     residual.Draw("APE")
-    #fitErrorGraph.Draw("same")
     simText.Draw("same")
     can.Update()
     can.SaveAs(label+"/"+str(iPlot)+observable+"ResidualsvsPU.png")
@@ -243,6 +227,5 @@ for observable in observables.keys():
     can.Update()
     can.SaveAs(label+"/"+observable+str(iPlot)+"vsPU.png")
     iPlot=iPlot+1
-    #raw_input()
 
 
