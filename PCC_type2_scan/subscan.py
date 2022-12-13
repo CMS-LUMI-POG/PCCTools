@@ -74,6 +74,7 @@ for ia in alist:
                 fcondor.write("Error  = {0}/{1}/run.err\n".format(current, folder))
                 fcondor.write("Log    = {0}/{1}/run.log\n".format(current, folder))
 
+                                                                                    # 1           2         3          4      5      6       7         8
                 fcondor.write("Arguments = {0} {1} {2} {3} {4} {5} {6} {7}\n".format(filename, str(ia), str(ni), str(ib), str(ic), label, pyscript, args.run))
                 fcondor.write("Queue\n")
                 fcondor.close()

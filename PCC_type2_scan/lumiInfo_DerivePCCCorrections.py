@@ -12,6 +12,7 @@ parser.add_argument("-a", "--all", default=True, help="Apply both the type1 and 
 parser.add_argument("--quadTrainCorr", default=0.00, help="Apply a quadratic correction to in-train BXs (Default:  0.02 ub/Hz)")
 parser.add_argument("--noType1", action='store_true', default=False, help="Only apply the type2 correction")
 parser.add_argument("--noType2", action='store_true', default=False, help="Only apply the type1 correction")
+parser.add_argument("-l", "--label", default="", help="The label for outputs")
 parser.add_argument('-b', '--batch',   action='store_true', default=False, help="Batch mode (doesn't make GUI TCanvases)")
 parser.add_argument('-p', '--par', default="0.074,0.0,0.00086,0.014", help="The parameters for type1 and type2 correction (0.074,0.0,0.00086,0.014)")
 parser.add_argument('--filterByRunInFileName', default=False, action='store_true', help="Filter by run in the name of the files.")
@@ -19,6 +20,7 @@ parser.add_argument('--nLSInLumiBlock', default=500, type=int, help="Number of L
 parser.add_argument('--buildFromScratch', default=1, type=int, help="Start from cert trees (default); do --buildFromScratch=0 to start from \"Before\" histograms")
 parser.add_argument('--threshold', default=0.5, type=float, help="The threshold to find active bunches")
 parser.add_argument("-t", "--type1byfill", default=False, action='store_true', help="Apply Type 1 Correction by Fill")
+parser.add_argument("-r", "--runs", default="", help="Comma separated list of runs.")
 args=parser.parse_args()
 
 file = ROOT.TFile.Open(args.inputFile,"READ")
@@ -117,7 +119,8 @@ dictRawClustersPerBx["10"].GetYaxis().SetTitle("Avg. Raw Clusters")
 canvas.Draw()
 canvas.SaveAs("10th_LS_BX_SBIL.png")
 
-newfile = ROOT.TFile.Open("corrections.root","recreate")
+#newfile = ROOT.TFile.Open("corrections.root","recreate")
+newfile=ROOT.TFile("Overall_Correction_"+label+".root", "recreate")
 newfile.cd()
 #just lumiblock number 10 for now 
 allLumiPerBX.SetError(zeroes)
