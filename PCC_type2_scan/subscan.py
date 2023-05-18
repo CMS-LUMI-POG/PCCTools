@@ -16,11 +16,9 @@ parser.add_argument("-a", default="0.001,0.002,0.004", help="Parameter a min,max
 parser.add_argument("-n", default="0.000,0.001,0.002", help=" nonlinearity in type I effect. Default: -0.0100, 0.0100, 0.0001")
 parser.add_argument("-b", default="0.0003,0.0016,0.00001", help="Parameter b min,max,step.  Default:  0.0006,0.0009,0.00005")
 parser.add_argument("-c", default="0.009,0.020,0.0005", help="Parameter c min,max,step.  Default:  0.012,0.02,0.005")
+parser.add_argument('--norm', default=1, type=int, help="divide by this number for reduce computation time,just renormalize for the study")
 parser.add_argument("-d", "--dir", default="JobDir", help="For output and jobs.  Default: JobDir")
 parser.add_argument("-f", "--file", default="Run2016B-LumiPixels-PromptReco-v2_June17_4965_4980_Random_certtree.root", help="The input certtree file")
-parser.add_argument("-r", "--run", default="4976", help="The run number to be checked")
-#parer.add_argument("--fill", default="4976", help="The fill number to be checked")
-#parser.add_argument("--batch", action='store_true', default=False, help="Do jobs on lxbatch.  Default: False")
 args=parser.parse_args()
 
 a=args.a.split(",")
@@ -35,14 +33,13 @@ blist=numpy.arange(float(b[0]),float(b[1]),float(b[2]))
 c=args.c.split(",")
 clist=numpy.arange(float(c[0]),float(c[1]),float(c[2]))
 
-runs = args.run
 #set paths
 
 current=os.getcwd()
 
 bashjob="base.sh"
 pathbashjob="{0}/{1}".format(current, bashjob)
-pyscript="lumiInfo_DerivePCCCorrections_noKey.py"
+pyscript="lumiInfo_DerivePCCCorrections.py"
 pathpyscript="{0}/{1}".format(current, pyscript)
 filename = args.file
 root_file="{0}/".format(current)+filename
@@ -60,27 +57,30 @@ for ia in alist:
 
                 os.chdir(folder)
        
-                shutil.copyfile(pathbashjob, bashjob)
-                shutil.copyfile(pathpyscript, pyscript)
-            
                 condorfname="Scan_condor_{0}".format(label)
             
                 fcondor=open(condorfname, "w")
-                fcondor.write("Executable = {0}\n".format(bashjob)) 
+                fcondor.write("Executable = {0}\n".format(pathbashjob)) 
                 fcondor.write("Universe = vanilla\n")
                 fcondor.write("should_transfer_files = YES\n")
-                fcondor.write("transfer_input_files = lumiInfo_DerivePCCCorrections_noKey.py\n")
+                fcondor.write("Proxy_filename = x509up\n")
+                fcondor.write('Proxy_path = /afs/cern.ch/user/s/shigginb/private/$(Proxy_filename)\n')
+                fcondor.write("transfer_input_files = {0:s},{1:s}\n".format(pathpyscript,filename))
                 fcondor.write("Output = {0}/{1}/run.out\n".format(current, folder))
                 fcondor.write("Error  = {0}/{1}/run.err\n".format(current, folder))
                 fcondor.write("Log    = {0}/{1}/run.log\n".format(current, folder))
 
                                                                                     # 1           2         3          4      5      6       7         8
-                fcondor.write("Arguments = {0} {1} {2} {3} {4} {5} {6} {7}\n".format(filename, str(ia), str(ni), str(ib), str(ic), label, pyscript, args.run))
+                fcondor.write("Arguments = $(Proxy_path) {0} {1} {2} {3} {4} {5} {6} {7}\n".format(filename, str(ia), str(ni), str(ib), str(ic), label, pyscript,args.norm))
+                fcondor.write('request_cpus = 4\n')
+                fcondor.write('+JobFlavour  = "longlunch"\n')
+                fcondor.write('+AccountingGroup = "group_u_CMS.CAF.COMM"\n')
                 fcondor.write("Queue\n")
                 fcondor.close()
 
-                os.system("chmod +x base.sh lumiInfo_DerivePCCCorrections_noKey.py Scan_condor_{0}".format(label))
                 os.system("condor_submit Scan_condor_{0}".format(label))
                 os.chdir(current)
+                #break
+            #break
+        #break
 
- 

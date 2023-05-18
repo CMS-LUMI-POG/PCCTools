@@ -17,10 +17,10 @@ parser.add_argument('-b', '--batch',   action='store_true', default=False, help=
 parser.add_argument('-p', '--par', default="0.074,0.0,0.00086,0.014", help="The parameters for type1 and type2 correction (0.074,0.0,0.00086,0.014)")
 parser.add_argument('--filterByRunInFileName', default=False, action='store_true', help="Filter by run in the name of the files.")
 parser.add_argument('--nLSInLumiBlock', default=500, type=int, help="Number of LSs to group for evaluation (Default:  500)")
+parser.add_argument('--norm', default=1, type=int, help="divide by this number for reduce computation time,just renormalize for the study")
 parser.add_argument('--buildFromScratch', default=1, type=int, help="Start from cert trees (default); do --buildFromScratch=0 to start from \"Before\" histograms")
 parser.add_argument('--threshold', default=0.5, type=float, help="The threshold to find active bunches")
 parser.add_argument("-t", "--type1byfill", default=False, action='store_true', help="Apply Type 1 Correction by Fill")
-parser.add_argument("-r", "--runs", default="", help="Comma separated list of runs.")
 args=parser.parse_args()
 
 file = ROOT.TFile.Open(args.inputFile,"READ")
@@ -93,34 +93,52 @@ for iq in range(10):
 
 type2CorrTemplate=ROOT.TH1F("type2CorrTemplate","",BXLength,0,BXLength)
 
+###
+#setting the template
+###
 for i in range(1,BXLength):
     type2CorrTemplate.SetBinContent(i,b*exp(-(i-2)*c)+b2*exp(-(i-2)*c2))
 type2CorrTemplate.GetXaxis().SetRangeUser(0,100)
 
+
+
+
+
+###
+#initializing lumi containers 
+###
+allLumiPerBX = ROOT.TH1F("AllLumiPerBX","AllLumiPerBX",BXLength,0,BXLength)
+noisePerBX=ROOT.TH1F("noisePerBX","",BXLength,0,BXLength)
+corrPerBX=ROOT.TH1F("corrPerBX","",BXLength,0,BXLength)
+corrRatioOverall=ROOT.TH1F("corrRatioOverall","",10,0,10)
+
 for iblock,block in enumerate(tree):
-    lumiInfoObj = block.LumiInfo_ALCARECORawPCCProdUnCorr_rawPCCProd_RECO
-    #print("bunch 200 clusters ",lumiInfoObj.getInstLumiBX(200))
+    if iblock>args.nLSInLumiBlock: break
+    #lumiInfoObj = block.LumiInfo_ALCARECORawPCCProdUnCorr_rawPCCProd_RECO
+    #lumiInfoObj = block.LumiInfo_rawPCCProd_rawPCRandom_rawRECO
+    lumiInfoObj = block.LumiInfo_rawPCCProd_rawPCCRandom_corrRECO
     dictRawClustersPerBx[str(iblock)]=ROOT.TH1F("RawClustersPerBX_"+str(iblock),"",BXLength,0,BXLength)
+
     for bx in range(0,BXLength):
-        dictRawClustersPerBx[str(iblock)].SetBinContent(bx,lumiInfoObj.getInstLumiBX(bx))
-    if iblock==10:
-        allLumiPerBX=dictRawClustersPerBx[str(iblock)].Clone()
-        noisePerBX=ROOT.TH1F("noisePerBX","",BXLength,0,BXLength)
-        corrPerBX=ROOT.TH1F("corrPerBX","",BXLength,0,BXLength)
-        corrRatioOverall=ROOT.TH1F("corrRatioOverall","",10,0,10)
-        break
+        dictRawClustersPerBx[str(iblock)].SetBinContent(bx,lumiInfoObj.getInstLumiBX(bx)/args.norm)
+        #allLumiPerBX=dictRawClustersPerBx[str(iblock)].Clone()
+    allLumiPerBX.Add(dictRawClustersPerBx[str(iblock)])
 
 
 canvas = ROOT.TCanvas("c","c",600,600)
 canvas.cd()
-dictRawClustersPerBx["10"].Draw()
-dictRawClustersPerBx["10"].GetXaxis().SetTitle("Bunch Crossing \#")
-dictRawClustersPerBx["10"].GetYaxis().SetTitle("Avg. Raw Clusters")
+#dictRawClustersPerBx["10"].Draw()
+#dictRawClustersPerBx["10"].GetXaxis().SetTitle("Bunch Crossing \#")
+#dictRawClustersPerBx["10"].GetYaxis().SetTitle("Avg. Raw Clusters")
+allLumiPerBX.Draw()
+allLumiPerBX.GetXaxis().SetTitle("Bunch Crossing \#")
+allLumiPerBX.GetYaxis().SetTitle("Avg. Raw Clusters")
 canvas.Draw()
-canvas.SaveAs("10th_LS_BX_SBIL.png")
+#canvas.SaveAs("10th_LS_BX_SBIL.png")
+canvas.SaveAs("BX_SBIL.png")
 
 #newfile = ROOT.TFile.Open("corrections.root","recreate")
-newfile=ROOT.TFile("Overall_Correction_"+label+".root", "recreate")
+newfile=ROOT.TFile("Overall_Correction_"+args.label+".root", "recreate")
 newfile.cd()
 #just lumiblock number 10 for now 
 allLumiPerBX.SetError(zeroes)
@@ -133,8 +151,10 @@ noise=0
 print("Find abort gap")
 gap=False
 idl=0
-num_cut=20
-for l in range(1,500):
+#num_cut=20
+num_cut=400
+#for l in range(1,500):
+for l in range(1,1500):
     if allCorrLumiPerBX.GetBinContent(l)==0 and allCorrLumiPerBX.GetBinContent(l+1)==0 and allCorrLumiPerBX.GetBinContent(l+2)==0:
         gap=True
     if gap and allCorrLumiPerBX.GetBinContent(l)!=0 and idl<num_cut:
@@ -256,3 +276,11 @@ newfile.WriteTObject(corrRatioPerBX, "Ratio_Correction")
 #newfile.WriteTObject(ratio_gap, "Ratio_Nonlumi_"+LBKey)
 newfile.WriteTObject(noiseToCorrRatio, "Ratio_Noise")
 newfile.WriteTObject(corrRatioOverall, "Overall_Ratio")
+
+newfile.WriteTObject(histpar_a1, "Parameter_a1")
+newfile.WriteTObject(histpar_a2, "Parameter_a2")
+newfile.WriteTObject(histpar_b, "Parameter_b")
+newfile.WriteTObject(histpar_c, "Parameter_c")
+newfile.WriteTObject(histpar_b2, "Parameter_b2")
+newfile.WriteTObject(histpar_c2, "Parameter_c2")
+newfile.WriteTObject(histpar_quad, "Parameter_quad")

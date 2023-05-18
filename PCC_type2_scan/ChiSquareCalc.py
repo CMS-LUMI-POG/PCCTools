@@ -3,18 +3,26 @@ from math import exp,fabs
 import argparse
 import subprocess
 from array import array
+import glob
 
-ROOTSYS='/Users/jingyuluo/Downloads/Program/root/lib'
-sys.path.append(ROOTSYS)
+#ROOTSYS='/Users/jingyuluo/Downloads/Program/root/lib'
+#sys.path.append(ROOTSYS)
 
 import ROOT
 from ROOT import TGraph2D
+
+def draw2D(tgraph):
+    c = ROOT.TCanvas(tgraph.GetName()+"_can",tgraph.GetName()+"_can",600,600)
+    c.cd()
+    tgraph.Draw("COLZ")
+    c.SaveAs(tgraph.GetName()+".png")
+    
+    return c
 
 parser=argparse.ArgumentParser()
 #parser.add_argument("-h", "--help", help="Display this message.")
 parser.add_argument("-p", "--path", default="", help="The path to the output correciton files")
 parser.add_argument("-n", "--name", default="After_Corr", help="The name of histogram that need to be checked")
-parser.add_argument("-r", "--run", default="", help="The run number to be checked")
 parser.add_argument("-l", "--label", default="", help="The label for outputs")
 parser.add_argument("-b", "--batch", action='store_true', default=False, help="Batch mode (doesn't make GUI TCanvases)")
 parser.add_argument("-c", "--cut", default="30", help="The number of bins cut for the long tail after a bunch train when calulating the Chi2s")
@@ -34,7 +42,6 @@ if args.batch is True:
     ROOT.gROOT.SetBatch(ROOT.kTRUE)
 
 histname= args.name
-run_num = args.run
 cut_value = int(args.cut)
 
 a_array = array('d')
@@ -47,9 +54,10 @@ chi2train_array = array('d')
 chi2tail_array = array('d')
 chi2combine_array = array('d')
 
-outfile=ROOT.TFile("Grid_Chi2_"+args.run+"_"+args.cut+"_"+args.path+"_"+args.label+".root", "recreate")
+outfile=ROOT.TFile(args.path+"/Grid_Chi2_"+args.cut+"_"+args.label+".root", "recreate")
 
-files=os.listdir(args.path)
+#files=os.listdir(args.path+)
+files=glob.glob(args.path+"/Overall*.root")
 files.sort()
 
 min_chi2type1=1e20
@@ -80,7 +88,9 @@ min_b_combine=0
 min_c_combine=0
 
 for filename in files:
-    tfile=ROOT.TFile(args.path+"/"+filename)
+    #tfile=ROOT.TFile(args.path+"/"+filename)
+    tfile=ROOT.TFile(filename)
+    print(tfile)
     histpar_a = tfile.Get("Parameter_a1")
     histpar_b = tfile.Get("Parameter_b")
     histpar_c = tfile.Get("Parameter_c")
@@ -260,56 +270,93 @@ print("Minimazation of Combined Chi2: a={0}, b={1}, c={2}, Chi2={3}".format(min_
 
 
 grchi2type1_a = ROOT.TGraph(len(a_array), a_array, chi2type1_array)
+grchi2type1_a.SetName("grchi2type1_a")
+grchi2type1_a.SetTitle("grchi2type1_a")
 grchi2type1_a.GetXaxis().SetTitle("a")
+#grchi2type1_a_can = draw2D(grchi2type1_a)
 
 grchi2overall_bc = TGraph2D(len(b_array), b_array, c_array, chi2overall_array)
+grchi2overall_bc.SetName("grchi2overall_bc")
+grchi2overall_bc.SetTitle("grchi2overall_bc")
 grchi2overall_bc.GetXaxis().SetTitle("b")
 grchi2overall_bc.GetYaxis().SetTitle("c")
+grchi2overall_bc_can = draw2D(grchi2overall_bc)
 
 grchi2train_bc = TGraph2D(len(b_array), b_array, c_array, chi2train_array)
+grchi2train_bc.SetName("grchi2train_bc")
+grchi2train_bc.SetTitle("grchi2train_bc")
 grchi2train_bc.GetXaxis().SetTitle("b")
 grchi2train_bc.GetYaxis().SetTitle("c")
+grchi2train_bc_can = draw2D(grchi2train_bc)
 
 grchi2tail_bc = TGraph2D(len(b_array), b_array, c_array, chi2tail_array)
+grchi2tail_bc.SetName("grchi2tail_bc")
+grchi2tail_bc.SetTitle("grchi2tail_bc")
 grchi2tail_bc.GetXaxis().SetTitle("b")
 grchi2tail_bc.GetYaxis().SetTitle("c")
+grchi2tail_bc_can = draw2D(grchi2tail_bc)
 
 grchi2combine_bc = TGraph2D(len(b_array), b_array, c_array, chi2combine_array)
+grchi2combine_bc.SetName("grchi2combine_bc")
+grchi2combine_bc.SetTitle("grchi2combine_bc")
 grchi2combine_bc.GetXaxis().SetTitle("b")
 grchi2combine_bc.GetYaxis().SetTitle("c")
+grchi2combine_bc_can = draw2D(grchi2combine_bc)
 
 grchi2overall_ab = TGraph2D(len(a_array), a_array, b_array, chi2overall_array)
+grchi2overall_ab.SetName("grchi2overall_ab")
+grchi2overall_ab.SetTitle("grchi2overall_ab")
 grchi2overall_ab.GetXaxis().SetTitle("a")
 grchi2overall_ab.GetYaxis().SetTitle("b")
+#grchi2overall_ab_can = draw2D(grchi2overall_ab)
 
 grchi2train_ab = TGraph2D(len(a_array), a_array, b_array, chi2train_array)
+grchi2train_ab.SetTitle("grchi2overall_ab")
 grchi2train_ab.GetXaxis().SetTitle("a")
 grchi2train_ab.GetYaxis().SetTitle("b")
+#grchi2train_ab_can = draw2D(grchi2train_ab)
 
 grchi2tail_ab = TGraph2D(len(a_array), a_array, b_array, chi2tail_array)
+grchi2tail_ab.SetName("grchi2tail_ab")
+grchi2tail_ab.SetTitle("grchi2tail_ab")
 grchi2tail_ab.GetXaxis().SetTitle("a")
 grchi2tail_ab.GetYaxis().SetTitle("b")
+#grchi2tail_ab_can = draw2D(grchi2tail_ab)
 
 grchi2combine_ab = TGraph2D(len(a_array), a_array, b_array, chi2combine_array)
+grchi2combine_ab.SetName("grchi2combine_ab")
+grchi2combine_ab.SetTitle("grchi2combine_ab")
 grchi2combine_ab.GetXaxis().SetTitle("a")
 grchi2combine_ab.GetYaxis().SetTitle("b")
+#grchi2combine_ab_can = draw2D(grchi2combine_ab)
 
 grchi2overall_ac = TGraph2D(len(a_array), a_array, c_array, chi2overall_array)
+grchi2overall_ac.SetName("grchi2overall_ac")
+grchi2overall_ac.SetTitle("grchi2overall_ac")
 grchi2overall_ac.GetXaxis().SetTitle("a")
 grchi2overall_ac.GetYaxis().SetTitle("c")
+#grchi2overall_ac_can = draw2D(grchi2overall_ac)
 
 grchi2train_ac = TGraph2D(len(a_array), a_array, c_array, chi2train_array)
+grchi2train_ac.SetName("grchi2train_ac")
+grchi2train_ac.SetTitle("grchi2train_ac")
 grchi2train_ac.GetXaxis().SetTitle("a")
 grchi2train_ac.GetYaxis().SetTitle("c")
+#grchi2train_ac_can = draw2D(grchi2train_ac)
 
 grchi2tail_ac = TGraph2D(len(a_array), a_array, c_array, chi2tail_array)
+grchi2tail_ac.SetName("grchi2tail_ac")
+grchi2tail_ac.SetTitle("grchi2tail_ac")
 grchi2tail_ac.GetXaxis().SetTitle("a")
 grchi2tail_ac.GetYaxis().SetTitle("c")
+#grchi2tail_ac_can = draw2D(grchi2tail_ac)
 
 grchi2combine_ac = TGraph2D(len(a_array), a_array, c_array, chi2combine_array)
+grchi2combine_ac.SetName("grchi2combine_ac")
+grchi2combine_ac.SetTitle("grchi2combine_ac")
 grchi2combine_ac.GetXaxis().SetTitle("a")
 grchi2combine_ac.GetYaxis().SetTitle("c")
-
+#grchi2combine_ac_can = draw2D(grchi2combine_ac)
 
 
 outfile.WriteTObject(grchi2type1_a, "grchi2type1_a")
@@ -327,6 +374,23 @@ outfile.WriteTObject(grchi2overall_ac, "grchi2overall_ac")
 outfile.WriteTObject(grchi2train_ac, "grchi2train_ac")
 outfile.WriteTObject(grchi2tail_ac, "grchi2tail_ac")
 outfile.WriteTObject(grchi2combine_ac, "grchi2combine_ac")
+
+#outfile.WriteTObject(grchi2type1_a_can, "grchi2type1_a_can")
+#outfile.WriteTObject(grchi2overall_bc_can, "grchi2overall_bc_can")
+#outfile.WriteTObject(grchi2train_bc_can, "grchi2train_bc_can")
+#outfile.WriteTObject(grchi2tail_bc_can, "grchi2tail_bc_can")
+#outfile.WriteTObject(grchi2combine_bc_can, "grchi2combine_bc_can")
+#
+#outfile.WriteTObject(grchi2overall_ab_can, "grchi2overall_ab_can")
+#outfile.WriteTObject(grchi2train_ab_can, "grchi2train_ab_can")
+#outfile.WriteTObject(grchi2tail_ab_can, "grchi2tail_ab_can")
+#outfile.WriteTObject(grchi2combine_ab_can, "grchi2combine_ab_can")
+#
+#outfile.WriteTObject(grchi2overall_ac_can, "grchi2overall_ac_can")
+#outfile.WriteTObject(grchi2train_ac_can, "grchi2train_ac_can")
+#outfile.WriteTObject(grchi2tail_ac_can, "grchi2tail_ac_can")
+#outfile.WriteTObject(grchi2combine_ac_can, "grchi2combine_ac_can")
+
 
 outfile.Close()
 
